@@ -1,0 +1,106 @@
+# (https://www.umweltbundesamt.de/daten/umwelt-wirtschaft/gesellschaftliche-kosten-von-umweltbelastungen#klimakosten-von-treibhausgas-emissionen)
+# 237€ per ton recommended for pricing and 809€ for covering all costs of current and future generations (2022)
+# current EU ETS carbon prices between 80€ and 100€ # https://ember-climate.org/data/data-tools/carbon-price-viewer/ (2023)
+# eur per metric ton
+carbon_costs = 237
+
+[Production]
+BIGGEST_STATE_NUM = 1000
+BIGGEST_ACTION_NUM = 1
+
+[Production.init.values] # used for initialization of contemporary
+# https://www.destatis.de/DE/Presse/Pressemitteilungen/2023/03/PD23_090_43312.html
+# proportion of power supply in 2022 in Germany normalized to take unused technologies into account (85.8% total used)
+# bio gas 5.8%, hydropower 3.2%, others 5.2%
+coal = 0.388 # 33.3%
+nuclear = 0.075 # 6.4% -> 0%? (shutdown now)
+solar = 0.124 # 10.6% 
+wind = 0.281 # 24.1% 
+gas = 0.133 # 11.4% (fossil)
+
+[Production.power] # per facility/plant
+# in megawatts
+coal = 1000 # this varies (according to wikipedia), 500 is on the lower side
+nuclear = 1000 # from https://www.energy.gov/ne/articles/infographic-how-much-power-does-nuclear-reactor-produce
+solar = 1000 # varies a lot (according to wikipedia)
+wind = 1000 # same as solar
+gas = 1000 # lower end (according to https://en.wikipedia.org/wiki/List_of_natural_gas_power_stations_in_the_United_States)
+
+[Production.carbon]
+# from https://www.ipcc.ch/site/assets/uploads/2018/02/ipcc_wg3_ar5_annex-iii.pdf page:1335
+# kilograms of CO2 per MWh
+coal = 820
+nuclear = 12
+solar = 48
+wind = 12
+gas = 490
+
+[Production.lcoe]
+# levelized cost of electricity (without carbon emissions) in Cent per kWh (2021)
+# Levelized Cost of Electricity Renewable Energy Technologies - 2021 - Fraunhofer ISE
+# https://www.ise.fraunhofer.de/content/dam/ise/de/documents/publications/studies/DE2021_ISE_Studie_Stromgestehungskosten_Erneuerbare_Energien.pdf page:2
+# the paper only provides intervals, we have taken the approximate mean of the outer bounds
+# value for nuclear energy external costs: 34 Cent/kWh (huge intervals [0.1 Cent/kWh, 320 Cent/kWh]) (risks are not included in carbon costs) (https://foes.de/pdf/2012-09-Externe_Kosten_Atomenergie.pdf page:2)
+# lcoe estimate for nuclear energy: 14-19 Cent/kWh (unknown if external costs are included in some way/ no data for Germany) (https://www.bundestag.de/resource/blob/887090/1867659c1d4edcc0e32cb093ab073767/WD-5-005-22-pdf-data.pdf page:17)
+coal = 15
+nuclear = 100 # sum of lcoe and external?
+solar = 5
+wind = 8
+gas = 20
+
+[Consumption]
+
+[Consumption.power]
+# taken from https://www.destatis.de/DE/Themen/Branchen-Unternehmen/Energie/Verwendung/Tabellen/stromabsatz-haushalt.html -> 2022
+# in megawatts
+homes = 15312
+industrial = 30071
+
+
+[Storage]
+# taken from https://www.bmwk.de/Redaktion/DE/Downloads/S-T/stromspeicherstrategie-231208.pdf?__blob=publicationFile&v=2
+# in MWh
+capacity = 1000
+initial_load = 0.5
+BIGGEST_STATE_NUM = 10000
+BIGGEST_ACTION_NUM = 50
+# from https://pubs.acs.org/doi/10.1021/es505027p
+# kilograms of CO2 per MWh
+carbon = 104
+cent_per_day_per_kWh = 0 # cost of pumped hydro power plants in Germany (2009) https://web.archive.org/web/20160303103229/http://www.vde.com/de/fg/ETG/Arbeitsgebiete/V1/Aktuelles/Oeffentlich/Seiten/Energiespeicherstudie-Ergebnisse.aspx  # disabled because it leads to highly unstable training runs. There is probably a need to fix some hyperparameters
+
+
+[Dataset]
+
+data_dir = "./data"
+
+consumptiondata_path = "Realisierter_Stromverbrauch_20150101_20231231.csv"
+
+[Dataset.wind]
+# this varies -> matches the dataset, because wind was measured in the city
+# is on the lower side to get a lower bound
+hellman_exponent = 0.34
+# this is about the height of modern turbines
+turbine_height = 110
+# thresholds for approximation of typical power curves of wind turbines
+# https://en.wind-turbine-models.com/powercurves e.g. Enercon E-175 EP5
+start = 4
+saturation_start = 12
+cutoff = 25
+
+[Dataset.winddata_paths]
+Hannover = "stundenwerte_FF_02014_19500101_20221231_hist/produkt_ff_stunde_19500101_20221231_02014.txt" # https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/wind/historical/stundenwerte_FF_02014_19500101_20221231_hist.zip
+Bremen = "stundenwerte_FF_00691_19260101_20221231_hist/produkt_ff_stunde_19260101_20221231_00691.txt" # https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/wind/historical/stundenwerte_FF_00691_19260101_20221231_hist.zip
+Essen = "stundenwerte_FF_01303_19630101_20221231_hist/produkt_ff_stunde_19630101_20221231_01303.txt" # https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/wind/historical/stundenwerte_FF_01303_19630101_20221231_hist.zip
+Hamburg = "stundenwerte_FF_01975_19500101_20221231_hist/produkt_ff_stunde_19500101_20221231_01975.txt" # https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/wind/historical/stundenwerte_FF_01975_19500101_20221231_hist.zip
+Stuttgart = "stundenwerte_FF_04928_19760901_20221231_hist/produkt_ff_stunde_19760901_20221231_04928.txt" # https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/wind/historical/stundenwerte_FF_04928_19760901_20221231_hist.zip
+Leipzig = "stundenwerte_FF_02932_19720501_20221231_hist/produkt_ff_stunde_19720501_20221231_02932.txt" # https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/wind/historical/stundenwerte_FF_02932_19720501_20221231_hist.zip
+
+
+[Dataset.solardata_paths]
+Braunschweig = "stundenwerte_ST_00662_row/produkt_st_stunde_19580101_20231231_00662.txt" # https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/solar/stundenwerte_ST_00662_row.zip
+Bremen = "stundenwerte_ST_00691_row/produkt_st_stunde_20090101_20231231_00691.txt" # https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/solar/stundenwerte_ST_00691_row.zip
+Essen = "stundenwerte_ST_01303_row/produkt_st_stunde_20230831_20231231_01303.txt" # https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/solar/stundenwerte_ST_01303_row.zip
+Hamburg = "stundenwerte_ST_01975_row/produkt_st_stunde_20050101_20231231_01975.txt" # https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/solar/stundenwerte_ST_01975_row.zip
+Stuttgart = "stundenwerte_ST_04928_row/produkt_st_stunde_19790101_20231231_04928.txt" # https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/solar/stundenwerte_ST_04928_row.zip
+Leipzig = "stundenwerte_ST_02932_row/produkt_st_stunde_20190501_20230930_02932.txt" # https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/solar/stundenwerte_ST_02932_row.zip
